@@ -4,3 +4,8 @@ desc=Transpose text (swap 2 characters/lines, transpose/reverse selection,...)
 type=cudatext-plugin
 subdir=cuda_transpose
 homepage=https://github.com/ThaiDat/cuda_transpose
+
+[item1]
+section=commands
+caption=Transpose Character\Transpose
+method=transpose
