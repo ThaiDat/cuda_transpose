@@ -1,0 +1,6 @@
+[info]
+title=Transpose Character
+desc=Transpose text (swap 2 characters/lines, transpose/reverse selection,...)
+type=cudatext-plugin
+subdir=cuda_transpose_character
+homepage=https://github.com/ThaiDat/cuda_transpose_character
