@@ -1,5 +1,5 @@
 [info]
-title=Transpose Character
+title=Transpose
 desc=Transpose text (swap 2 characters/lines, transpose/reverse selection,...)
 type=cudatext-plugin
 subdir=cuda_transpose
