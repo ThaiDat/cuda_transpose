@@ -2,85 +2,96 @@ import cudatext as app
 from cudatext import ed
 
 
-def _standardize_pos(pos):
-    '''Ensure x2, y2 hold a bigger position
-    pos: tuple (column_from, line_from, column_to, line_to)
-    return standardized pos which (column_to, line_to) > (column_from, line_from)
-    '''
-    x1, y1, x2, y2 = pos
-    if x2 < 0:
-        return pos
-    elif (y1 > y2) or (y1 == y2 and x1 > x2):
-        return x2, y2, x1, y1
-    else:
-        return pos        
+VERY_BIG_NUMBER = 1000_000_000
 
 
 class Command:  
     
+    def standardize_pos(self, pos):
+        '''Ensure x2, y2 hold a bigger position
+        pos: tuple (column_from, line_from, column_to, line_to)
+        return standardized pos which (column_to, line_to) > (column_from, line_from)
+        '''
+        x1, y1, x2, y2 = pos
+        if x2 < 0:
+            return pos
+        elif (y1 > y2) or (y1 == y2 and x1 > x2):
+            return x2, y2, x1, y1
+        return pos
+        
+    def get_next_place(self, x, y):
+        '''Get the next place 1 step forward from current place (endline counted)
+        x, y: Position on editor
+        line_len: Length of current line
+        line_cnt: Number of lines
+        return col, line of the next place 1 step forward
+        '''
+        if x == len(ed.get_text_line(y)):
+            return 0, (y + 1 if y < ed.get_line_count() - 1 else y)
+        return x + 1, y
+            
+    def get_prev_place(self, x, y, line_len=None, line_cnt=None):
+        '''Get the prev place 1 step forward from current place (endline counted)
+        x, y: Position on editor
+        return col, line of the prev place 1 step forward
+        '''
+        if x == 0:
+            return (len(ed.get_text_line(y - 1)), y - 1) if y > 0 else (0, 0)
+        return x - 1, y        
+    
     def do_replace_str(self, s, pos):
-        '''replace text in the given pos
+        '''Replace text in the given pos
         s: string to put in the pos
-        pos: (column_from, line_from, column_to, line_to) tuple.
+        pos: (column_from, line_from, column_to, line_to) tuple. (column_to, line_to) must be bigger than (column_from, line_from) 
         return the caret position after insertion
         ''' 
-        x1, y1, x2, y2 = _standardize_pos(pos)
-        x_new = None; y_new = None
-        if x2 < 0: 
-            x_new, y_new = ed.insert(x1, y1, s) 
-        else:
-            x_new, y_new = ed.replace(x1, y1, x2, y2, s)
+        x1, y1, x2, y2 = pos
+        x_new, y_new = ed.replace(x1, y1, x2, y2, s)
         return x1, y1, x_new, y_new
-
-    def do_replace_line(self, s, line):
-        '''replace line in the given index
-        s: string to put in the line
-        line: index of line
-        return None
-        '''
-        ed.set_text_line(line, s)
         
-    def do_transpose_single(self, pos, direction=1):
-        '''Appy transpose to the editor. The behaviour depend on the pos. Caret position unchanged
+    def do_insert_str(self, s, x, y):
+        '''Insert string at given pos
+        s: string to put in the pos
+        x, y: column, line. Position to insert
+        return the caret position after insertion
+        '''
+        x_new, y_new = ed.insert(x, y, s)
+        return x_new, y_new, -1, -1
+        
+    def do_transpose_single(self, pos):
+        '''Apply transpose to the text under caret
         pos: selected area. Value will change the behaviour of this function
-            selection: Roll the selected text
-            single caret somewhere in the middle: Swap (transpose/roll) two nearby characters
-            single caret at the beginning/end of line:  Swap (transpose/roll) two nearby lines
-        direction: Direction of transpose.
-            1: Forward
-            -1: Backward
+            selection: Do nothing
+            without selection: transpose or swap 2 nearby characters. (endl count)
         return None
         '''
-        x1, y1, x2, y2 = _standardize_pos(pos)
+        x, y, x2, y2 = pos
+        # Do nothing if selection
         if x2 >= 0:
-            # Selection
-            s = ed.get_text_substr(x1, y1, x2, y2)
-            s = s[-1] + s[:-1] if direction > 0 else s[1:] + s[0]
-            self.do_replace_str(s, (x1, y1, x2, y2))
-        else:
-            # Single carret
-            curr_line = ed.get_text_line(y1)
-            if x1 == 0 and y1 > 0:
-                # Beginning of line
-                prev_line = ed.get_text_line(y1 - direction)
-                self.do_replace_line(curr_line, y1 - direction)
-                self.do_replace_line(prev_line, y1)
-            elif x1 == len(curr_line) and y1 < ed.get_line_count() - 1:
-                # End of line  
-                next_line = ed.get_text_line(y1 + direction)
-                self.do_replace_line(curr_line, y1 + direction)
-                self.do_replace_line(next_line, y1)  
-                ed.set_caret(len(next_line), y1)
-            elif x1 > 0 and x1 < len(curr_line):
-                # Middle of line    
-                s = ed.get_text_substr(x1 - 1, y1, x1 + 1, y1)            
-                self.do_replace_str(s[::-1], (x1 - 1, y1, x1 + 1, y1))    
+            return pos
+        # No selection. 
+        _x, _y = self.get_prev_place(x, y)
+        x_, y_ = self.get_next_place(x, y)
+        s = ed.get_text_substr(_x, _y, x_, y_)
+        _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
+        ed.set_caret(x_new, y_new)
 
+    def do_transpose_multiple_without_selection(self, carets):
+        '''Apply transpose to multiple caret without selection. Actually do transpose single one by one
+        carets: list of positions
+        return None
+        '''
+        pass
+    
     def transpose(self):
         '''
         Apply transpose to current edior based on caret place and selection
         '''
         carets = ed.get_carets()
         if len(carets) == 1:
+            # single caret
             self.do_transpose_single(carets[0])
+        else:
+            # multi carets
+            pass
             
