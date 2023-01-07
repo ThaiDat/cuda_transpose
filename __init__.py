@@ -27,7 +27,7 @@ class Command:
         return col, line of the next place 1 step forward
         '''
         if x == len(ed.get_text_line(y)):
-            return 0, (y + 1 if y < ed.get_line_count() - 1 else y)
+            return (0, y + 1) if y < ed.get_line_count() - 1 else (x, y)
         return x + 1, y
             
     def get_prev_place(self, x, y, line_len=None, line_cnt=None):
@@ -67,21 +67,31 @@ class Command:
         '''
         x, y, x2, y2 = pos
         # Do nothing if selection
-        if x2 >= 0:
+        if x2 < 0:
+            # No selection
+            _x, _y = self.get_prev_place(x, y)
+            x_, y_ = self.get_next_place(x, y)
+            s = ed.get_text_substr(_x, _y, x_, y_)
+            #print((_x, _y, x_, y_), s) # Uncomment for debugging
+            _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
+            return x_new, y_new, -1, -1
+        else:
+            # Selection
             return pos
-        # No selection. 
-        _x, _y = self.get_prev_place(x, y)
-        x_, y_ = self.get_next_place(x, y)
-        s = ed.get_text_substr(_x, _y, x_, y_)
-        _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
-        ed.set_caret(x_new, y_new)
+            
 
-    def do_transpose_multiple_without_selection(self, carets):
-        '''Apply transpose to multiple caret without selection. Actually do transpose single one by one
+    def do_transpose_multiple(self, carets):
+        '''Apply transpose to multiple carets. 
+        If no selection, do transpose single one by one
+        If any selection, make all selection. Then transpose among them
         carets: list of positions
         return None
         '''
-        pass
+        sel = any(map(lambda c: c[3] >= 0, carets))
+        if sel:
+            pass
+        else:
+            for pos in carets: self.do_transpose_single(pos)
     
     def transpose(self):
         '''
@@ -90,8 +100,7 @@ class Command:
         carets = ed.get_carets()
         if len(carets) == 1:
             # single caret
-            self.do_transpose_single(carets[0])
+            pos = self.do_transpose_single(carets[0])
+            ed.set_caret(*pos)
         else:
-            # multi carets
-            pass
-            
+            self.do_transpose_multiple(carets)

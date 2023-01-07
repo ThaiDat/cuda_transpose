@@ -7,5 +7,7 @@ homepage=https://github.com/ThaiDat/cuda_transpose
 
 [item1]
 section=commands
-caption=Transpose Character\Transpose
+caption=Transpose
 method=transpose
+menu=o
+hotkey=Ctrl+T
