@@ -2,9 +2,6 @@ import cudatext as app
 from cudatext import ed
 
 
-VERY_BIG_NUMBER = 1000_000_000
-
-
 class Command:  
     
     def standardize_pos(self, pos, sel=False):
@@ -115,9 +112,7 @@ class Command:
                 shifted_x = std_x + shift_x if pre_y2 == shifted_y else std_x
                 shifted_y2 = std_y2 + shift_y
                 shifted_x2 = std_x2 + shift_x if pre_y2 == shifted_y2 else std_x2
-                shifted_pos = (shifted_x, shifted_y, shifted_x2, shifted_y2)
-                print(std_carets[i], (shift_x, shift_y), shifted_pos)
-                new_pos = self.do_replace_str(strs[i-1], shifted_pos)
+                new_pos = self.do_replace_str(strs[i-1], (shifted_x, shifted_y, shifted_x2, shifted_y2))
                 new_carets.append(new_pos)
                 shift_x = new_pos[2] - std_carets[i][2]
                 shift_y = new_pos[3] - std_carets[i][3]
