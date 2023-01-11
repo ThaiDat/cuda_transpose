@@ -20,6 +20,16 @@ class Command:
             return x2, y2, x1, y1
         return pos
         
+    def shift_pos(self, pos, distance):
+        '''Shift the position by a distance
+        pos: original position
+        distance: cols, lines to shift the position
+        return shifted position
+        '''
+        x, y, x2, y2 = pos
+        dx, dy = distance
+        return x+dx, y+dy, x2+dx, y2+dy
+
     def get_next_place(self, x, y):
         '''Get the next place 1 step forward from current place (endline counted)
         x, y: Position on editor
@@ -91,9 +101,26 @@ class Command:
         if sel:
             std_carets = [self.standardize_pos(pos, sel=True) for pos in carets]
             strs = [ed.get_text_substr(*pos) for pos in std_carets]
+            # Put the last to top place
             new_carets = [self.do_replace_str(strs[-1], std_carets[0])]
-            for i in range(1, len(std_carets)):
-                new_carets.append(self.do_replace_str(strs[i-1], std_carets[i]))
+            # Use shift_x, shift_y to adjust the position after replace substr
+            shift_y = new_carets[0][3] - std_carets[0][3]
+            shift_x = new_carets[0][2] - std_carets[0][2]          
+
+            for i in range(1, len(strs)):
+                # reset cumm if needed
+                std_x, std_y, std_x2, std_y2 = std_carets[i]
+                pre_x, pre_y, pre_x2, pre_y2 = new_carets[i-1]
+                shifted_y = std_y + shift_y
+                shifted_x = std_x + shift_x if pre_y2 == shifted_y else std_x
+                shifted_y2 = std_y2 + shift_y
+                shifted_x2 = std_x2 + shift_x if pre_y2 == shifted_y2 else std_x2
+                shifted_pos = (shifted_x, shifted_y, shifted_x2, shifted_y2)
+                print(std_carets[i], (shift_x, shift_y), shifted_pos)
+                new_pos = self.do_replace_str(strs[i-1], shifted_pos)
+                new_carets.append(new_pos)
+                shift_x = new_pos[2] - std_carets[i][2]
+                shift_y = new_pos[3] - std_carets[i][3]
             return new_carets            
         else:
             new_carets = [self.do_transpose_single(pos) for pos in carets]
@@ -109,6 +136,7 @@ class Command:
             pos = self.do_transpose_single(carets[0])
             ed.set_caret(*pos)
         else:
-            new_carets = self.do_transpose_multiple(carets)
-            for i, pos in enumerate(new_carets):
-                ed.set_caret(*pos, id=app.CARET_SET_INDEX+i)
+            new_carets = iter(self.do_transpose_multiple(carets))
+            ed.set_caret(-1, -1, id=app.CARET_DELETE_ALL)
+            for pos in new_carets:
+                ed.set_caret(*pos, id=app.CARET_ADD)
