@@ -7,14 +7,15 @@ VERY_BIG_NUMBER = 1000_000_000
 
 class Command:  
     
-    def standardize_pos(self, pos):
+    def standardize_pos(self, pos, sel=False):
         '''Ensure x2, y2 hold a bigger position
         pos: tuple (column_from, line_from, column_to, line_to)
+        sel: caret is selection. If no, return pos as a empty selection (instead of empty caret pos)
         return standardized pos which (column_to, line_to) > (column_from, line_from)
         '''
         x1, y1, x2, y2 = pos
         if x2 < 0:
-            return pos
+            return (x1, y1, x1, y1) if sel else pos 
         elif (y1 > y2) or (y1 == y2 and x1 > x2):
             return x2, y2, x1, y1
         return pos
@@ -78,7 +79,6 @@ class Command:
         else:
             # Selection
             return pos
-            
 
     def do_transpose_multiple(self, carets):
         '''Apply transpose to multiple carets. 
@@ -89,10 +89,16 @@ class Command:
         '''
         sel = any(map(lambda c: c[3] >= 0, carets))
         if sel:
-            pass
+            std_carets = [self.standardize_pos(pos, sel=True) for pos in carets]
+            strs = [ed.get_text_substr(*pos) for pos in std_carets]
+            new_carets = [self.do_replace_str(strs[-1], std_carets[0])]
+            for i in range(1, len(std_carets)):
+                new_carets.append(self.do_replace_str(strs[i-1], std_carets[i]))
+            return new_carets            
         else:
-            for pos in carets: self.do_transpose_single(pos)
-    
+            new_carets = [self.do_transpose_single(pos) for pos in carets]
+            return new_carets
+
     def transpose(self):
         '''
         Apply transpose to current edior based on caret place and selection
@@ -103,4 +109,6 @@ class Command:
             pos = self.do_transpose_single(carets[0])
             ed.set_caret(*pos)
         else:
-            self.do_transpose_multiple(carets)
+            new_carets = self.do_transpose_multiple(carets)
+            for i, pos in enumerate(new_carets):
+                ed.set_caret(*pos, id=app.CARET_SET_INDEX+i)

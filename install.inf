@@ -10,4 +10,3 @@ section=commands
 caption=Transpose
 method=transpose
 menu=o
-hotkey=Ctrl+T
