@@ -13,7 +13,7 @@ class Command:
         x1, y1, x2, y2 = pos
         if x2 < 0:
             return (x1, y1, x1, y1) if sel else pos 
-        elif (y1 > y2) or (y1 == y2 and x1 > x2):
+        elif (y1, x1) > (y2, x2):
             return x2, y2, x1, y1
         return pos
 
