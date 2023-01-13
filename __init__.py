@@ -69,6 +69,12 @@ class Command:
             # No selection
             _x, _y = self.get_prev_place(x, y)
             x_, y_ = self.get_next_place(x, y)
+            # edge case beginning of file. Do nothing, move caret one step forward
+            if (_x,_y) == (0,0):
+                return x_, y_, -1, -1 
+            # edge case end of file. Do nothing
+            if (x, y) == (x_,y_):
+                return x, y, -1, -1         
             s = ed.get_text_substr(_x, _y, x_, y_)
             #print((_x, _y, x_, y_), s) # Uncomment for debugging
             _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
