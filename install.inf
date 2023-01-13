@@ -1,6 +1,6 @@
 [info]
 title=Transpose
-desc=Transpose text (swap 2 characters/lines, transpose/reverse selection,...)
+desc=Do transpose operation. This should behave almost like Transpose command in Sublime Text.
 type=cudatext-plugin
 subdir=cuda_transpose
 homepage=https://github.com/ThaiDat/cuda_transpose
@@ -9,4 +9,3 @@ homepage=https://github.com/ThaiDat/cuda_transpose
 section=commands
 caption=Transpose
 method=transpose
-menu=o
