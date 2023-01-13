@@ -1,10 +1,11 @@
 Plugin for CudaText. 
 
-Do transpose operation. This should behave almost like Transpose command in Sublime text.
+Do transpose operation. This should behave almost like Transpose command in Sublime Text.
 
-* Single caret: Simply swap two characters around the caret (same as Sublime Text or Bash)
-* Multiple carets: Do transpose on every single caret one by one
-* Multiple carets with text selection: Rotate the text selection. (First selection become second, second become third,... , last become first). Notice that caret with single caret will be treated as empty selection.
+* Single caret without selection: Simply swap two characters around the caret (same as Sublime Text or Bash)
+* Single caret with text selection: Nothing happen
+* Multiple carets without selection: Do transpose on each single caret one by one.
+* Multiple carets with text selection: Rotate the text selection. (First selection become second, second become third,... , last become first). Notice that caret with no selection will be treated as empty selection (different from Sublime Text)
 
 Author: ThaiDat
 
