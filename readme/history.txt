@@ -1,2 +1,5 @@
-﻿1.0.0 2023-11-01
+﻿1.0.1 2023-01-14
+- Fix #9 Plugin mark line as changed when at the end of file on single caret without selection
+
+1.0.0 2023-01-13
 init 

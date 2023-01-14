@@ -4,6 +4,7 @@ desc=Do transpose operation. This should behave almost like Transpose command in
 type=cudatext-plugin
 subdir=cuda_transpose
 homepage=https://github.com/ThaiDat/cuda_transpose
+api=1.0.1
 
 [item1]
 section=commands
