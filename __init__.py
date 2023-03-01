@@ -1,6 +1,11 @@
 import cudatext as app
 from cudatext import ed
+from cudax_lib import get_translation
 
+_ = get_translation(__file__)  # I18N
+
+def is_surrogate(ch):
+    return (ch>=0xD800) and (ch<=0xDFFF)
 
 class Command:  
     
@@ -77,7 +82,7 @@ class Command:
                 return x, y, -1, -1         
             s = ed.get_text_substr(_x, _y, x_, y_)
             #print((_x, _y, x_, y_), s) # Uncomment for debugging
-            _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
+            __, __, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
             return x_new, y_new, -1, -1
         else:
             # Selection
@@ -131,3 +136,79 @@ class Command:
             ed.set_caret(-1, -1, id=app.CARET_DELETE_ALL)
             for pos in new_carets:
                 ed.set_caret(*pos, id=app.CARET_ADD)
+
+
+
+    def validate_caret(self):
+        carets = ed.get_carets()
+
+        # Continue only with one-caret
+        if len(carets) != 1:
+            return False
+
+        # Continue only with a valid selection
+        if carets[0][3] < 0:
+            return False
+
+        # Continue only with one-line
+        if carets[0][1] != carets[0][3]:
+            return False
+
+        return True
+
+    def normalize_caret(self):
+        x0, y0, x1, y1 = ed.get_carets()[0]
+
+        if (y0, x0) >= (y1, x1): #note that y first
+            x0, y0, x1, y1 = x1, y1, x0, y0
+
+        return x0, y0, x1, y1
+
+    def move_sel_left(self):
+        if self.validate_caret():
+            text = ed.get_text_sel()
+
+            x0, y0, x1, y1 = self.normalize_caret()
+
+            dx = 1
+            if (x0>=2) and is_surrogate(ord(ed.get_text_substr(x0-1, y0, x0, y0))):
+                dx = 2
+
+            if x0 >= dx:
+                ed.delete(x0, y0, x1, y1)
+                ed.insert(x0 - dx, y0, text)
+                # Preserve selection
+                ed.set_caret(x0 - dx, y0, x1 - dx, y1, app.CARET_SET_ONE)
+                app.msg_status(_('Move selection: moved to the left'))
+            else:
+                app.msg_status(_('Move selection: start reached'))
+
+        else:
+            app.msg_status(_('Move selection: no conditions to move'))
+
+    def move_sel_right(self):
+        if self.validate_caret():
+            text = ed.get_text_sel()
+
+            x0, y0, x1, y1 = self.normalize_caret()
+
+            line = ed.get_text_line(y0)
+            line_w = line.encode("utf-16")
+            if line_w[0]==0xff and line_w[1]==0xfe:
+                line_w = line_w[2:]
+            len_line = len(line_w)//2
+
+            dx = 1
+            if (x1+2<=len_line) and is_surrogate(ord(ed.get_text_substr(x1, y0, x1+1, y0))):
+                dx = 2
+
+            if x1 + dx <= len_line:
+                ed.delete(x0, y0, x1, y1)
+                ed.insert(x0 + dx, y0, text)
+                # Preserve selection
+                ed.set_caret(x0 + dx, y0, x1 + dx, y1, app.CARET_SET_ONE)
+                app.msg_status(_('Move selection: moved to the right'))
+            else:
+                app.msg_status(_('Move selection: end reached'))
+        else:
+            app.msg_status(_('Move selection: no conditions to move'))

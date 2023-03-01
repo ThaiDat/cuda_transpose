@@ -1,5 +1,8 @@
-﻿1.0.1 2023-01-14
+﻿1.1.0 2023-03-01
++ Add: 2 commands to move single-line selection 1 char lefter/righter (by @JairoMartinezA + Alexey T.)
+
+1.0.1 2023-01-14
 - Fix #9 Plugin mark line as changed when at the end of file on single caret without selection
 
 1.0.0 2023-01-13
-init 
+initial version 
