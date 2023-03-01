@@ -1,12 +1,21 @@
 [info]
 title=Transpose
-desc=Do transpose operation. This should behave almost like Transpose command in Sublime Text.
+desc=Gives Transpose operation. This should behave almost like Transpose command in Sublime Text. Also give commands to move single-line selection lefter/righter.
 type=cudatext-plugin
 subdir=cuda_transpose
 homepage=https://github.com/ThaiDat/cuda_transpose
-api=1.0.1
 
 [item1]
 section=commands
-caption=Transpose
+caption=Transpose\Transpose
 method=transpose
+
+[item10]
+section=commands
+caption=Transpose\Move single-line selection lefter
+method=move_sel_left
+
+[item11]
+section=commands
+caption=Transpose\Move single-line selection righter
+method=move_sel_right

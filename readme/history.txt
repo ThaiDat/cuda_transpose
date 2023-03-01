@@ -1,6 +1,7 @@
-﻿1.1.0 2023-03-01
+﻿1.2.0 2023-03-01
++ Add commands "Move single-line selection lefter/righter" (by JairoMartinezA + Alexey T.)
 + Add message to status bar when no transpose applied
-- Fix #11 Support surrogate pairs (Thanks Alex. T)
+- Fix #11 Support surrogate pairs (thanks Alexey T.)
 
 1.0.1 2023-01-14
 - Fix #9 Plugin mark line as changed when at the end of file on single caret without selection
