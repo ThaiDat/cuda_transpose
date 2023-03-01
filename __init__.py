@@ -215,12 +215,12 @@ class Command:
                 ed.insert(x0 - dx, y0, text)
                 # Preserve selection
                 ed.set_caret(x0 - dx, y0, x1 - dx, y1, app.CARET_SET_ONE)
-                app.msg_status(_('Move selection: moved to the left'))
+                app.msg_status(_('Transpose: Moved to the left'))
             else:
-                app.msg_status(_('Move selection: start reached'))
+                app.msg_status(_('Transpose: Start reached'))
 
         else:
-            app.msg_status(_('Move selection: no conditions to move'))
+            app.msg_status(_('Transpose: No conditions to move'))
 
     def move_sel_right(self):
         if self.caret_valid_for_move():
@@ -238,8 +238,8 @@ class Command:
                 ed.insert(x0 + dx, y0, text)
                 # Preserve selection
                 ed.set_caret(x0 + dx, y0, x1 + dx, y1, app.CARET_SET_ONE)
-                app.msg_status(_('Move selection: moved to the right'))
+                app.msg_status(_('Transpose: Moved to the right'))
             else:
-                app.msg_status(_('Move selection: end reached'))
+                app.msg_status(_('Transpose: End reached'))
         else:
-            app.msg_status(_('Move selection: no conditions to move'))
+            app.msg_status(_('Transpose: No conditions to move'))
