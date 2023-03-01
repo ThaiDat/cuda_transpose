@@ -1,5 +1,21 @@
 import cudatext as app
 from cudatext import ed
+from cudax_lib import get_translation
+
+
+def is_surrogate(ch):
+    '''Check if ch is a char in a surrogate pair
+    ch: Single character string
+    return True if ch is a valid single char in a surrogate pair (stay in range 0xD800 - 0xDFFF).
+    '''
+    if len(ch) != 1:
+        return False
+    ch = ord(ch)
+    return 0xD800 <= ch and ch <= 0xDFFF
+
+
+_ = get_translation(__file__)  # I18N
+
 
 
 class Command:  
@@ -17,6 +33,19 @@ class Command:
             return x2, y2, x1, y1
         return pos
 
+    def get_line_max(self, y):
+        '''Get the largest position (column) of current line
+        y: line
+        return the max columns possible of line y
+        '''
+        line = ed.get_text_line(y).encode('utf-16')
+        if len(line) < 2:
+            return len(line)
+        if line[0] == 0xff and line[1] == 0xfe:
+            return (len(line) - 2) // 2
+        else:
+            return len(line) // 2
+
     def get_next_place(self, x, y):
         '''Get the next place 1 step forward from current place (endline counted)
         x, y: Position on editor
@@ -24,7 +53,7 @@ class Command:
         line_cnt: Number of lines
         return col, line of the next place 1 step forward
         '''
-        if x == len(ed.get_text_line(y)):
+        if x == self.get_line_max(y):
             return (0, y + 1) if y < ed.get_line_count() - 1 else (x, y)
         return x + 1, y
             
@@ -34,7 +63,7 @@ class Command:
         return col, line of the prev place 1 step forward
         '''
         if x == 0:
-            return (len(ed.get_text_line(y - 1)), y - 1) if y > 0 else (0, 0)
+            return (self.get_line_max(y - 1), y - 1) if y > 0 else (0, 0)
         return x - 1, y        
     
     def do_replace_str(self, s, pos):
@@ -56,6 +85,15 @@ class Command:
         x_new, y_new = ed.insert(x, y, s)
         return x_new, y_new, -1, -1
         
+    def do_delete_str(self, pos):
+        '''Delete string at given pos
+        pos: (column_from, line_from, column_to, line_to) tuple. (column_to, line_to) must be bigger than (column_from, line_from) 
+        return the caret position after deletion
+        '''
+        x1, y1, x2, y2 = pos
+        ed.delete(x1, y1, x2, y2)
+        return x1, y1, -1, -1
+    
     def do_transpose_single(self, pos):
         '''Apply transpose to the text under caret
         pos: selected area. Value will change the behaviour of this function
@@ -67,17 +105,26 @@ class Command:
         # Do nothing if selection
         if x2 < 0:
             # No selection
-            _x, _y = self.get_prev_place(x, y)
+            # Get the next character. Skip 2 char if surrogate pair
             x_, y_ = self.get_next_place(x, y)
+            s_ = ed.get_text_substr(x, y, x_, y_)
+            if is_surrogate(s_):
+                x_, y_ = self.get_next_place(x_, y_)
+                s_ = ed.get_text_substr(x, y, x_, y_)
             # edge case beginning of file. Do nothing, move caret one step forward
             if (x,y) == (0,0):
                 return x_, y_, -1, -1 
             # edge case end of file. Do nothing
             if (x, y) == (x_,y_):
                 return x, y, -1, -1         
-            s = ed.get_text_substr(_x, _y, x_, y_)
-            #print((_x, _y, x_, y_), s) # Uncomment for debugging
-            _, _, x_new, y_new = self.do_replace_str(s[::-1], (_x, _y, x_, y_))
+            # Get previous character, skip 2 chars if surrogate pair
+            _x, _y = self.get_prev_place(x, y)
+            _s = ed.get_text_substr(_x, _y, x, y)
+            if is_surrogate(_s):
+                _x, _y = self.get_prev_place(_x, _y)
+                _s = ed.get_text_substr(_x, _y, x, y)
+            #print((_x, _y, x_, y_), _s, s_) # Uncomment for debugging
+            __, __, x_new, y_new = self.do_replace_str(s_ + _s, (_x, _y, x_, y_))
             return x_new, y_new, -1, -1
         else:
             # Selection
