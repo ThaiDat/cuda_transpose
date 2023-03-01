@@ -180,3 +180,66 @@ class Command:
             ed.set_caret(-1, -1, id=app.CARET_DELETE_ALL)
             for pos in new_carets:
                 ed.set_caret(*pos, id=app.CARET_ADD)
+
+
+    def caret_valid_for_move(self):
+        carets = ed.get_carets()
+
+        # Continue only with one-caret
+        if len(carets) != 1:
+            return False
+
+        # Continue only with a valid selection
+        if carets[0][3] < 0:
+            return False
+
+        # Continue only with one-line
+        if carets[0][1] != carets[0][3]:
+            return False
+
+        return True
+
+
+    def move_sel_left(self):
+        if self.caret_valid_for_move():
+            text = ed.get_text_sel()
+            caret = ed.get_carets()[0]
+            x0, y0, x1, y1 = self.standardize_pos(caret)
+
+            dx = 1
+            if (x0>=2) and is_surrogate(ed.get_text_substr(x0-1, y0, x0, y0)):
+                dx = 2
+
+            if x0 >= dx:
+                ed.delete(x0, y0, x1, y1)
+                ed.insert(x0 - dx, y0, text)
+                # Preserve selection
+                ed.set_caret(x0 - dx, y0, x1 - dx, y1, app.CARET_SET_ONE)
+                app.msg_status(_('Transpose: Moved to the left'))
+            else:
+                app.msg_status(_('Transpose: Start reached'))
+
+        else:
+            app.msg_status(_('Transpose: No conditions to move'))
+
+    def move_sel_right(self):
+        if self.caret_valid_for_move():
+            text = ed.get_text_sel()
+            caret = ed.get_carets()[0]
+            x0, y0, x1, y1 = self.standardize_pos(caret)
+            len_line = self.get_line_max(y0)
+
+            dx = 1 
+            if (x1+2<=len_line) and is_surrogate(ed.get_text_substr(x1, y0, x1+1, y0)):
+                dx = 2
+
+            if x1 + dx <= len_line:
+                ed.delete(x0, y0, x1, y1)
+                ed.insert(x0 + dx, y0, text)
+                # Preserve selection
+                ed.set_caret(x0 + dx, y0, x1 + dx, y1, app.CARET_SET_ONE)
+                app.msg_status(_('Transpose: Moved to the right'))
+            else:
+                app.msg_status(_('Transpose: End reached'))
+        else:
+            app.msg_status(_('Transpose: No conditions to move'))
