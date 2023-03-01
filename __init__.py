@@ -116,6 +116,7 @@ class Command:
                 return x_, y_, -1, -1 
             # edge case end of file. Do nothing
             if (x, y) == (x_,y_):
+                app.msg_status(_('Transpose: End of file reached'))
                 return x, y, -1, -1         
             # Get previous character, skip 2 chars if surrogate pair
             _x, _y = self.get_prev_place(x, y)
@@ -128,6 +129,7 @@ class Command:
             return x_new, y_new, -1, -1
         else:
             # Selection
+            app.msg_status(_('Transpose: Nothing to transpose'))
             return pos
 
     def do_transpose_multiple(self, carets):
